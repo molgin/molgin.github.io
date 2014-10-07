@@ -6,102 +6,74 @@
 
     <title>over the bull</title>
     <meta name="description" content="notes from the flatiron school in the financial district" />
+
     <meta name="HandheldFriendly" content="True" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="shortcut icon" href="assets/icons/favicon.ico?v=21df0f8abc" type="image/x-icon">
-	<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="57x57" href="assets/icons/apple-touch-icon-57x57.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="72x72" href="assets/icons/apple-touch-icon-72x72.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="76x76" href="assets/icons/apple-touch-icon-76x76.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="114x114" href="assets/icons/apple-touch-icon-114x114.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="120x120" href="assets/icons/apple-touch-icon-120x120.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="144x144" href="assets/icons/apple-touch-icon-144x144.png?v=21df0f8abc" />
-	<link rel="apple-touch-icon" sizes="152x152" href="assets/icons/apple-touch-icon-152x152.png?v=21df0f8abc" />
+    <link rel="shortcut icon" href="favicon.ico">
 
-    <link rel="stylesheet" type="text/css" href="assets/css/normalize.css?v=21df0f8abc" />
-    <link rel="stylesheet" type="text/css" href="assets/css/icons.css?v=21df0f8abc" />
-    <link rel="stylesheet" type="text/css" href="assets/css/screen.css?v=21df0f8abc" />
-    <link href='http://fonts.googleapis.com/css?family=Lato:100,300,700,100italic,300italic,700italic|Source+Code+Pro:300,400,500,700|Bree+Serif' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="assets/css/screen.css?v=810913211c" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
 
     <meta name="generator" content="Ghost 0.5" />
 <link rel="alternate" type="application/rss+xml" title="over the bull" href="rss/index.html">
 <link rel="canonical" href="http://localhost:2368/" />
 </head>
 <body class="home-template">
-	<header class="main-header">
-		<div class="main-header-content">
-			<h1 class="blog-title"><a href="http://localhost:2368">over the bull</a></h1>
-			<h2 class="blog-description">notes from the flatiron school in the financial district</h2>
-		</div>
-		
-		
-		
-	</header>
 
     
+<header class="main-header no-cover">
+    <nav class="main-nav overlay clearfix">
+        
+        <a class="subscribe-button icon-feed" href="http://localhost:2368/rss/">Subscribe</a>
+    </nav>
+    <div class="vertical">
+        <div class="main-header-content inner">
+            <h1 class="page-title">over the bull</h1>
+            <h2 class="page-description">notes from the flatiron school in the financial district</h2>
+        </div>
+    </div>
+    <a class="scroll-down icon-arrow-left" href="index.html#content" data-offset="-45"><span class="hidden">Scroll Down</span></a>
+</header>
 
-<main class="content" role="main">
+<main id="content" class="content" role="main">
 
-<div class="extra-pagination">
-    <nav class="pagination" role="navigation">
-    <span class="page-number">Page 1 of 1</span>
-</nav>
-</div>
-
+    <div class="extra-pagination inner">
+        <nav class="pagination" role="navigation">
+        <span class="page-number">Page 1 of 1</span>
+    </nav>
+    </div>
+    
     <article class="post tag-flatiron-school">
         <header class="post-header">
             <h2 class="post-title"><a href="to-chain-or-not-to-chain/index.html">To Chain or Not to Chain</a></h2>
-            <section class="post-meta">
-    			<time class="post-date" datetime="2014-10-07">October 7, 2014</time>
-            </section>
         </header>
-        <section class="post-content">
-            <p>Chaining methods in Ruby is a great way to get a lot done on just one line. But the more methods you chain together, the greater the chance that your code will have results you might not expect.</p>
-    
-    <p>So how do you know when to chain your methods? A crucial thing to keep in mind when chaining methods is what each method returns.</p>
-    
-    <p>Chained methods work because each one operates on the return value of the previous method. So if you can anticipate each method's <strong>return value</strong>, you can anticipate your code's behavior.</p>
-    
-    <p>Some methods return different kinds of objects depending on the circumstances. For example, say you're storing user input in a variable <code>user_string</code>. Right away, you want to modify the string in place to replace any instances of your three least favorite misspelled words. (Some might question your choice to permanently modify the string — what if you want that data one day? — but you like to walk on the wild side.) So you write the following:</p>
-    
-    <pre><code>user_string = gets.chomp
-    user_string.gsub!("definately", "definitely").gsub!("wierd", "weird").gsub!("recieve", "receive")
-    </code></pre>
-    
-    <p>Looks good, right? Well, maybe not. It turns out that many bang methods, <code>gsub!</code> included, return <code>nil</code> if they don't actually change anything. So if your user is a great speller — or they just don't use one of the first two words — Ruby will complain of a <code>NoMethodError</code>, because you can't call <code>gsub!</code> on <code>nil</code>.</p>
-    
-    <p>To make sure your chained methods work regardless of the content of the string, it'd be better to use the non-bang <code>gsub</code>:</p>
-    
-    <pre><code>user_string = gets.chomp
-    user_string = user_string.gsub("definately", "definitely").gsub("wierd", "weird").gsub("recieve", "receive")
-    </code></pre>
-    
-    <p>or to refrain from chaining:</p>
-    
-    <pre><code>user_string = gets.chomp
-    user_string.gsub!("definately", "definitely")
-    user_string.gsub!("wierd", "weird")
-    user_string.gsub!("recieve", "receive")
-    </code></pre>
-    
-    <p>So when to chain? I think a good rule of thumb would be to only chain if you can be sure your methods will have appropriate return values. If they won't, or won't always, you can run into all kinds of unexpected consequences, and it can get confusing fast.</p>
-    
-    <hr />
-    
-    <p><strong>Bonus trivia:</strong> Because mathematical operators are technically methods, you can think of many simple arithmetic expressions as chained methods — as long as they share the same operator precedence, anyway: <code>1 + 9 - 3 # =&gt; 7</code> is equivalent to <code>1.+(9).-(3) # =&gt; 7</code>. (Potentially fascinating related question: How is operator precedence [i.e. order of operations] implemented? No, really, tell me!)</p>
+        <section class="post-excerpt">
+            <p>Chaining methods in Ruby is a great way to get a lot done on just one line. But the more methods you chain together, the greater <a class="read-more" href="to-chain-or-not-to-chain/index.html">&raquo;</a></p>
         </section>
+        <footer class="post-meta">
+            
+            <a href="author/molly/index.html">Molly</a>
+             on <a href="tag/flatiron-school/index.html">Flatiron School</a>
+            <time class="post-date" datetime="2014-10-07">07 October 2014</time>
+        </footer>
     </article>
-<nav class="pagination" role="navigation">
-    <span class="page-number">Page 1 of 1</span>
-</nav>
-</main>
     
-    <footer class="site-footer">
-    	<section class="rss"><a class="subscribe-button icon-feed" href="http://localhost:2368/rss/"></a></section>
-        <section class="copyright">&copy; 2014 over the bull</section>
-        <section class="poweredby"><a href="http://coffeeintoapps.com/arabica">Arabica</a> theme by Sean Lunsford. Published with <a href="https://ghost.org">Ghost</a>.</section>
+    <nav class="pagination" role="navigation">
+        <span class="page-number">Page 1 of 1</span>
+    </nav>
+
+</main>
+
+    <footer class="site-footer clearfix">
+         <section class="copyright"><a href="http://localhost:2368">over the bull</a> &copy; 2014</section>
+         <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
     </footer>
-    <script src="public/jquery.js?v=21df0f8abc"></script>
+
+    <script src="public/jquery.js?v=810913211c"></script>
+
+    <script type="text/javascript" src="assets/js/jquery.fitvids.js?v=810913211c"></script>
+    <script type="text/javascript" src="assets/js/index.js?v=810913211c"></script>
+
 </body>
 </html>
