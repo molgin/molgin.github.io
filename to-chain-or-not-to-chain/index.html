@@ -14,6 +14,8 @@
 
     <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=810913211c" />
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
+    <link rel="stylesheet" type="text/css"  
+      href="../assets/css/prism.css?v=810913211c" />
 
     <meta name="generator" content="Ghost 0.5" />
 <link rel="alternate" type="application/rss+xml" title="over the bull" href="../rss/index.html">
@@ -59,16 +61,16 @@ user_string.gsub!("definately", "definitely").gsub!("wierd", "weird").gsub!("rec
 
 <p>To make sure your chained methods work regardless of the content of the string, it'd be better to use the non-bang <code>gsub</code>:</p>
 
-<pre><code>user_string = gets.chomp  
+<pre><code class="language-ruby">user_string = gets.chomp  
 user_string = user_string.gsub("definately", "definitely").gsub("wierd", "weird").gsub("recieve", "receive")  
 </code></pre>
 
 <p>or to refrain from chaining:</p>
 
-<pre><code>user_string = gets.chomp
-user_string.gsub!("definately", "definitely")
-user_string.gsub!("wierd", "weird")
-user_string.gsub!("recieve", "receive")
+<pre><code class="language-ruby">user_string = gets.chomp  
+user_string.gsub!("definately", "definitely")  
+user_string.gsub!("wierd", "weird")  
+user_string.gsub!("recieve", "receive")  
 </code></pre>
 
 <p>So when to chain? I think a good rule of thumb would be to only chain if you can be sure your methods will have appropriate return values. If they won't, or won't always, you can run into all kinds of unexpected consequences, and it can get confusing fast.</p>
@@ -124,6 +126,8 @@ user_string.gsub!("recieve", "receive")
 
     <script src="../public/jquery.js?v=810913211c"></script>
 
+    <script type="text/javascript"  
+        src="../assets/js/prism.js?v=810913211c"></script> 
     <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=810913211c"></script>
     <script type="text/javascript" src="../assets/js/index.js?v=810913211c"></script>
 
