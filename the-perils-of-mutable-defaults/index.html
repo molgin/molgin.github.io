@@ -80,7 +80,7 @@
 
 <p>At this point I was totally baffled. Somehow, even though I had clearly used different keys, all the songs were going into the same array, and all the artists seemed to have all the songs in their arrays. And on top of that, somehow, my hash was still empty!</p>
 
-<p>So what's going on with this? There’s a clue in the documentation for <a href="http://www.ruby-doc.org/core-1.9.3/Hash.html#method-c-new">Hash::new</a>:</p>
+<p>So what’s going on with this? There’s a clue in the documentation for <a href="http://www.ruby-doc.org/core-1.9.3/Hash.html#method-c-new">Hash::new</a>:</p>
 
 <blockquote>
   <p><strong>new(obj) → new_hash</strong></p>
@@ -119,9 +119,9 @@
 =&gt; {"owen pallett"=&gt;[]}
 </code></pre>
 
-<p>If this isn’t what you want, this solution won't be ideal for you. Luckily, in most cases it will probably be a simple enough workaround to either remove those unwanted key-value pairs from your hash, or just suck it up and use the extra step of conditional assignment rather than initializing with a default value.</p>
+<p>If this isn’t what you want, this solution won’t be ideal for you. Luckily, in most cases it will probably be a simple enough workaround to either remove those unwanted key-value pairs from your hash, or just suck it up and use the extra step of conditional assignment rather than initializing with a default value.</p>
 
-<p>Finally, as you might expect, all this hassle is only necessary if the default value you want to use is a mutable type. If you want each key's default value to be a new string, array, or hash, use the block form. But if you want the default value to be an integer, say 0, you’re fine with <code>Hash.new(0)</code>. Your integer won’t mutate because, well, it’s immutable.</p>
+<p>Finally, as you might expect, all this hassle is only necessary if the default value you want to use is a mutable type. If you want each key’s default value to be a new string, array, or hash, use the block form. But if you want the default value to be an integer, say 0, you’re fine with <code>Hash.new(0)</code>. Your integer won’t mutate because, well, it’s immutable.</p>
 
 <p>Now go forth and initialize your hashes with maximum efficiency and minimum confusion!</p>
         </section>

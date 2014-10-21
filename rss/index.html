@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[over the bull]]></title><description><![CDATA[notes from the flatiron school in the financial district]]></description><link>http://localhost:2368/</link><generator>Ghost 0.5</generator><lastBuildDate>Tue, 21 Oct 2014 02:57:02 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[The Perils of Mutable Defaults]]></title><description><![CDATA[<p>Recently I wanted to set up a hash representing some music. In this hash, I needed each key to be an artist name, and each value to be an array representing that artist’s songs.</p>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[over the bull]]></title><description><![CDATA[notes from the flatiron school in the financial district]]></description><link>http://localhost:2368/</link><generator>Ghost 0.5</generator><lastBuildDate>Tue, 21 Oct 2014 13:18:04 GMT</lastBuildDate><atom:link href="http://localhost:2368/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[The Perils of Mutable Defaults]]></title><description><![CDATA[<p>Recently I wanted to set up a hash representing some music. In this hash, I needed each key to be an artist name, and each value to be an array representing that artist’s songs.</p>
 
 <p>Pretty straightforward, but I wanted to be able to shovel songs into these song arrays without worrying about whether I’d seen that artist before.</p>
 
@@ -34,7 +34,7 @@
 
 <p>At this point I was totally baffled. Somehow, even though I had clearly used different keys, all the songs were going into the same array, and all the artists seemed to have all the songs in their arrays. And on top of that, somehow, my hash was still empty!</p>
 
-<p>So what's going on with this? There’s a clue in the documentation for <a href="http://www.ruby-doc.org/core-1.9.3/Hash.html#method-c-new">Hash::new</a>:</p>
+<p>So what’s going on with this? There’s a clue in the documentation for <a href="http://www.ruby-doc.org/core-1.9.3/Hash.html#method-c-new">Hash::new</a>:</p>
 
 <blockquote>
   <p><strong>new(obj) → new_hash</strong></p>
@@ -73,9 +73,9 @@
 =&gt; {"owen pallett"=&gt;[]}
 </code></pre>
 
-<p>If this isn’t what you want, this solution won't be ideal for you. Luckily, in most cases it will probably be a simple enough workaround to either remove those unwanted key-value pairs from your hash, or just suck it up and use the extra step of conditional assignment rather than initializing with a default value.</p>
+<p>If this isn’t what you want, this solution won’t be ideal for you. Luckily, in most cases it will probably be a simple enough workaround to either remove those unwanted key-value pairs from your hash, or just suck it up and use the extra step of conditional assignment rather than initializing with a default value.</p>
 
-<p>Finally, as you might expect, all this hassle is only necessary if the default value you want to use is a mutable type. If you want each key's default value to be a new string, array, or hash, use the block form. But if you want the default value to be an integer, say 0, you’re fine with <code>Hash.new(0)</code>. Your integer won’t mutate because, well, it’s immutable.</p>
+<p>Finally, as you might expect, all this hassle is only necessary if the default value you want to use is a mutable type. If you want each key’s default value to be a new string, array, or hash, use the block form. But if you want the default value to be an integer, say 0, you’re fine with <code>Hash.new(0)</code>. Your integer won’t mutate because, well, it’s immutable.</p>
 
 <p>Now go forth and initialize your hashes with maximum efficiency and minimum confusion!</p>]]></description><link>http://localhost:2368/the-perils-of-mutable-defaults/</link><guid isPermaLink="false">bdcc87be-168d-4fe3-99e8-319609af3404</guid><dc:creator><![CDATA[Molly]]></dc:creator><pubDate>Tue, 21 Oct 2014 02:53:25 GMT</pubDate></item><item><title><![CDATA[To Chain or Not to Chain]]></title><description><![CDATA[<p>Chaining methods in Ruby is a great way to get a lot done on just one line. But the more methods you chain together, the greater the chance that your code will have results you might not expect.</p>
 
