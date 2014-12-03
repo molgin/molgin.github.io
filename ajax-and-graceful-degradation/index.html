@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Ajax and Graceful Degradation</title>
+    <meta name="description" content="" />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=73d9b9a622" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
+    <link rel="stylesheet" type="text/css"  
+      href="../assets/css/prism.css?v=73d9b9a622" />
+
+    <meta name="generator" content="Ghost 0.5" />
+<link rel="alternate" type="application/rss+xml" title="over the bull" href="../rss/index.html">
+<link rel="canonical" href="http://localhost:2368/ajax-and-graceful-degradation/" />
+</head>
+<body class="post-template tag-flatiron-school">
+
+    
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        <a class="back-button icon-arrow-left" href="http://localhost:2368">Home</a>
+        <a class="subscribe-button icon-feed" href="http://localhost:2368/rss/">Subscribe</a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+
+    <article class="post tag-flatiron-school">
+
+        <header class="post-header">
+            <h1 class="post-title">Ajax and Graceful Degradation</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2014-12-03">03 December 2014</time>  on <a href="../tag/flatiron-school/index.html">Flatiron School</a>
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p>For a recent Flatiron School lab, we were tasked with building a to-do list app from scratch, mimicking the functionality of <a href="http://todomvc-with-rails.herokuapp.com/">this</a> TodoMVC implementation, including using Ajax.</p>
+
+<p>But I gave myself an additional challenge. After years of watching my wife use NoScript to rule her browser with an iron fist, finding many sites shockingly unusable without Javascript, I’m sensitive to the need for graceful degradation. So I aimed to add Ajax to the features while preserving their functionality for users who may not have JavaScript enabled, or whose JavaScript is not functioning for some reason.</p>
+
+<p>I thought I’d go over how I implemented this for the various features and share what I learned along the way.</p>
+
+<h4 id="listanditemcreation">List and item creation</h4>
+
+<p>For this particular to-do list app, list and item creation used almost exactly the same form. Since the sample app linked above actually only allows one list, I’ll focus on the new item form. Here’s the form in the view:</p>
+
+<pre><code class="language-ruby">&lt;%= form_for [@list, Item.new], html: { class: "new_todo", id: "new_todo" }, remote: true, authenticity_token: true do |f| %&gt;  
+    &lt;%= f.text_field :description, id: "new-todo", placeholder: "add an item!", autofocus: true %&gt;
+  &lt;% end %&gt;
+</code></pre>
+
+<p>You probably know that the <code>remote</code> option allows the form to be submitted by Ajax automatically. What might surprise you is that, by itself, this option breaks the ability for the form to be submitted without Ajax. If you turn JavaScript off and try to submit the form, you’ll get an error about a missing authenticity token.</p>
+
+<p>This is because rails normally automatically generates a hidden input for the authenticity token, preventing cross-site forgeries. But Rails.js handles authenticity tokens differently, so as of Rails 4, using <code>remote: true</code> actually prevents Rails from generating that hidden input. To fix this, just add the option I used above, <code>authenticity_token: true</code>, to force it to generate the input anyway.</p>
+
+<p>The other thing you have to do to make sure this form works without JavaScript is just make sure you have an appropriate response in your controller:</p>
+
+<pre><code class="language-ruby">def create  
+  @list = List.find(params[:list_id])
+  respond_to do |format|
+    @item = @list.items.create(item_params)
+    if @item.save
+      format.html { redirect_to @list }
+      format.js {}
+    end
+  end
+end  
+</code></pre>
+
+<p>When you submit a form normally, without Ajax, it expects an HTML response, so the code in the <code>format.html</code> block will be executed. It’s quite simple to include this, so that browsers without JavaScript know where to go after submitting the form.</p>
+
+<h4 id="itemdeletion">Item deletion</h4>
+
+<p>At first when I added the ability to delete a list item, I used <code>link_to</code>, like so:</p>
+
+<pre><code class="language-ruby">&lt;%= link_to "", list_item_path(@list, item), method: :delete, class: "destroy", remote: true %&gt;  
+</code></pre>
+
+<p>It worked with JavaScript and I just kind of assumed it would work without it. But later I tried it and was surprised to find it didn’t work! I got an error about there being no route for a GET request to the list item path. But surely it should be a DELETE request...? Well, no. Browsers don’t support any requests other than GET for links; when you use the <code>method</code> option with <code>link_to</code>, Rails uses JavaScript behind the scenes to turn the request into the kind you specified. It’s impossible for a non-GET <code>link_to</code> to gracefully degrade.</p>
+
+<p>There is a solution, however. Instead of <code>link_to</code>, you can use <code>button_to</code>, which generates a form and can therefore make a DELETE request. I thought this seemed like a huge pain, but it was actually pretty simple:</p>
+
+<pre><code class="language-ruby">&lt;%= button_to "✖", list_item_path(@list, item), method: :delete, class: " destroy", remote: true %&gt;  
+</code></pre>
+
+<p>I had to tweak the CSS a little to make it look the same, putting the delete icon in the link text rather than in an <code>::after</code> pseudoelement, but other than that you can see that it’s pretty much exactly the same from the developer’s perspective. And now, users could delete list items even without JavaScript.</p>
+
+<h4 id="itemediting">Item editing</h4>
+
+<p>The solution to the graceful degradation problem for item editing was slightly less simple. This is because the app was set up to use JavaScript to listen for a double-click on a list item and then show a hidden text field. Obviously, non-JavaScript edit forms are nt a problem, but here there was no obvious way to include that form on the list page without messing up the site’s design. <br />
+I came up with an alternative solution: I added an edit button that appears next to the delete button, as below:</p>
+
+<p><img src="../content/images/2014/12/RailsTodomvc.png" alt="" /></p>
+
+<p>This button simply links to an edit page for that item which mimics the design of the rest of the site.</p>
+
+<p>Of course, I didn’t want this edit button to be visible to the JavaScript users who didn’t need it. Luckily, there’s an easy way to hide elements from JavaScript users while showing them to non-JavaScript users: just hide them with JavaScript.</p>
+
+<h4 id="challenges">Challenges</h4>
+
+<p>Not every feature had a straightforward non-JavaScript implementation, though. The one feature I couldn’t settle on how to implement was the ability to mark tasks as completed.</p>
+
+<p>Again though, this was less of a technical limitation and more of a design limitation. Obviously it would be possible to include a form with which users could mark items as completed, but without JavaScript, it couldn’t be submitted as soon as the user clicks the checkbox; there would need to be a submit button, but there just didn’t seem to be a good, intuitive place to put it.</p>
+
+<p>The other option would be for completion status to be edited on the item’s edit page, but that’s not great either. So for now I’ve left this feature JavaScript-only.</p>
+
+<h4 id="butwhy">But why?</h4>
+
+<p>I hear you cry. Is it really worth it to go to the trouble to support non-JavaScript users?</p>
+
+<p>Of course, sometimes you’ll have an app that depends on JavaScript for core functionality and just can’t work without it, and that’s OK. And non-JavaScript users are a small percentage of the total, so few people will be inconvenienced if your site does not degrade gracefully (not that that’s stopped people from tearing their hair out trying to support IE7).</p>
+
+<p>But as with anything, it’s a tradeoff. If a certain feature is especially annoying to implement without JavaScript, especially if it’s not essential to your site, it’s probably fair to conclude that it’s not worth the effort.</p>
+
+<p>But as you can see from the first examples here, it’s often trivially easy to maintain functionality for non-JavaScript users. And once you know about <code>authenticity_token: true</code>, for example, it’s easy to keep it in your toolbox and just use it unless you have a special reason not to.</p>
+
+<p>With these habits you’ll end up preserving a lot of functionality for non-JavaScript users with minimal effort. To me, that’s a win-win.</p>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/molly/index.html">Molly</a></h4>
+
+                    <p>Read <a href="../author/molly/index.html">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/share?text=Ajax%20and%20Graceful%20Degradation&amp;url=http://localhost:2368/ajax-and-graceful-degradation/"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/ajax-and-graceful-degradation/"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/ajax-and-graceful-degradation/"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+        </footer>
+
+    </article>
+
+</main>
+
+
+
+    <footer class="site-footer clearfix">
+         <section class="copyright"><a href="http://localhost:2368">over the bull</a> &copy; 2014</section>
+         <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+    </footer>
+
+    <script src="../public/jquery.js?v=73d9b9a622"></script>
+
+    <script type="text/javascript"  
+        src="../assets/js/prism.js?v=73d9b9a622"></script> 
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=73d9b9a622"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=73d9b9a622"></script>
+
+</body>
+</html>
