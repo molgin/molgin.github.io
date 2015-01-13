@@ -1,5 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Molly - over the bull]]></title><description><![CDATA[notes from the flatiron school in the financial district]]></description><link>http://localhost:2368/</link><generator>Ghost 0.5</generator><lastBuildDate>Wed, 03 Dec 2014 16:11:42 GMT</lastBuildDate><atom:link href="http://localhost:2368/author/molly/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Ajax and Graceful Degradation]]></title><description><![CDATA[<p>For a recent Flatiron School lab, we were tasked with building a to-do list app from scratch, mimicking the functionality of <a href="http://todomvc-with-rails.herokuapp.com/">this</a> TodoMVC implementation, including using Ajax.</p>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Molly - molblog]]></title><description><![CDATA[notes from the flatiron school in the financial district]]></description><link>http://localhost:2368/</link><generator>Ghost 0.5</generator><lastBuildDate>Tue, 13 Jan 2015 18:44:20 GMT</lastBuildDate><atom:link href="http://localhost:2368/author/molly/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Molly’s Very Basic Guide to Rails Ajax]]></title><description><![CDATA[<p>I wrote this as a quick reference for some teammates, and it’s handy so I figured I should post it here.</p>
+
+<h2 id="intheview">In the view</h2>
+
+<p>Add <code>remote: true</code> to the form or link. If it’s a form, also add <code>authenticity_token: true</code> so it will still work without JavaScript. If it’s a link using a method other than GET, consider making it a <code>button_to</code> so it will still work without JavaScript.</p>
+
+<h4 id="examples">Examples</h4>
+
+<pre><code class="language-ruby">&lt;%= form_for @thing, remote: true, authenticity_token: true do |f| %&gt;  
+</code></pre>
+
+<pre><code class="language-ruby">&lt;%= link_to "Do something", some_path, remote: true %&gt;  
+</code></pre>
+
+<pre><code class="language-ruby">&lt;%= button_to "✖", thing_path(@thing), method: :delete, remote: true %&gt;  
+</code></pre>
+
+<h2 id="inthecontroller">In the controller</h2>
+
+<p>Make sure there’s a <code>respond_to</code> that tells it how to handle JS requests.</p>
+
+<h4 id="example">Example</h4>
+
+<pre><code class="language-ruby">class ThingsController &lt; ApplicationController
+
+  def create
+    @thing = Thing.create(thing_params)
+    respond_to do |format|
+      if @thing.save
+        format.html { redirect_to @thing } # what it would do without ajax
+        format.js {} # looks for a view in the 'things' folder called 'create.js.erb'
+      end
+    end
+  end
+
+end  
+</code></pre>
+
+<h2 id="thejavascript">The JavaScript</h2>
+
+<p>Make a view in “views/[controller]” called “[action].js.erb”. So for our example, “views/things/create.js.erb”.</p>
+
+<p>The JavaScript you write in this view will be executed automatically when the Ajax call completes. You can do whatever you want in here! Also, you can use ERB.</p>
+
+<h4 id="example">Example</h4>
+
+<pre><code class="language-javascript">$("ul#things_list").append("&lt;li&gt;&lt;%= @thing.name %&gt;&lt;/li&gt;");
+</code></pre>
+
+<h3 id="bonus">Bonus</h3>
+
+<p>If you want to include more complex HTML without dealing with escaping it for JavaScript, you can render HTML partials. Using <code>j render</code> will tell Rails to escape it for JavaScript for you:</p>
+
+<pre><code class="language-javascript">$("ul#things_list").append("&lt;%= j render @thing %&gt;"); // renders partial at 'views/things/_thing.html.erb'
+</code></pre>]]></description><link>http://localhost:2368/mollys-very-basic-guide-to-rails-ajax/</link><guid isPermaLink="false">088fdcb2-12b1-45df-83a8-e2bdf16dc997</guid><dc:creator><![CDATA[Molly]]></dc:creator><pubDate>Tue, 13 Jan 2015 16:42:00 GMT</pubDate></item><item><title><![CDATA[Ajax and Graceful Degradation]]></title><description><![CDATA[<p>For a recent Flatiron School lab, we were tasked with building a to-do list app from scratch, mimicking the functionality of <a href="http://todomvc-with-rails.herokuapp.com/">this</a> TodoMVC implementation, including using Ajax.</p>
 
 <p>But I gave myself an additional challenge. After years of watching my wife use NoScript to rule her browser with an iron fist, finding many sites shockingly unusable without Javascript, I’m sensitive to the need for graceful degradation. So I aimed to add Ajax to the features while preserving their functionality for users who may not have JavaScript enabled, or whose JavaScript is not functioning for some reason.</p>
 

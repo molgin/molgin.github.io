@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <title>Molly’s Very Basic Guide to Rails Ajax</title>
+    <meta name="description" content="" />
+
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="shortcut icon" href="../favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=b0e5ec2566" />
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
+    <link rel="stylesheet" type="text/css"  
+      href="../assets/css/prism.css?v=b0e5ec2566" />
+
+    <meta name="generator" content="Ghost 0.5" />
+<link rel="alternate" type="application/rss+xml" title="molblog" href="../rss/index.html">
+<link rel="canonical" href="http://localhost:2368/mollys-very-basic-guide-to-rails-ajax/" />
+</head>
+<body class="post-template">
+
+    
+
+
+<header class="main-header post-head no-cover">
+    <nav class="main-nav  clearfix">
+        <a class="back-button icon-arrow-left" href="http://localhost:2368">Home</a>
+        <a class="subscribe-button icon-feed" href="http://localhost:2368/rss/">Subscribe</a>
+    </nav>
+</header>
+
+<main class="content" role="main">
+
+    <article class="post">
+
+        <header class="post-header">
+            <h1 class="post-title">Molly’s Very Basic Guide to Rails Ajax</h1>
+            <section class="post-meta">
+                <time class="post-date" datetime="2015-01-13">13 January 2015</time> 
+            </section>
+        </header>
+
+        <section class="post-content">
+            <p>I wrote this as a quick reference for some teammates, and it’s handy so I figured I should post it here.</p>
+
+<h2 id="intheview">In the view</h2>
+
+<p>Add <code>remote: true</code> to the form or link. If it’s a form, also add <code>authenticity_token: true</code> so it will still work without JavaScript. If it’s a link using a method other than GET, consider making it a <code>button_to</code> so it will still work without JavaScript.</p>
+
+<h4 id="examples">Examples</h4>
+
+<pre><code class="language-ruby">&lt;%= form_for @thing, remote: true, authenticity_token: true do |f| %&gt;  
+</code></pre>
+
+<pre><code class="language-ruby">&lt;%= link_to "Do something", some_path, remote: true %&gt;  
+</code></pre>
+
+<pre><code class="language-ruby">&lt;%= button_to "✖", thing_path(@thing), method: :delete, remote: true %&gt;  
+</code></pre>
+
+<h2 id="inthecontroller">In the controller</h2>
+
+<p>Make sure there’s a <code>respond_to</code> that tells it how to handle JS requests.</p>
+
+<h4 id="example">Example</h4>
+
+<pre><code class="language-ruby">class ThingsController &lt; ApplicationController
+
+  def create
+    @thing = Thing.create(thing_params)
+    respond_to do |format|
+      if @thing.save
+        format.html { redirect_to @thing } # what it would do without ajax
+        format.js {} # looks for a view in the 'things' folder called 'create.js.erb'
+      end
+    end
+  end
+
+end  
+</code></pre>
+
+<h2 id="thejavascript">The JavaScript</h2>
+
+<p>Make a view in “views/[controller]” called “[action].js.erb”. So for our example, “views/things/create.js.erb”.</p>
+
+<p>The JavaScript you write in this view will be executed automatically when the Ajax call completes. You can do whatever you want in here! Also, you can use ERB.</p>
+
+<h4 id="example">Example</h4>
+
+<pre><code class="language-javascript">$("ul#things_list").append("&lt;li&gt;&lt;%= @thing.name %&gt;&lt;/li&gt;");
+</code></pre>
+
+<h3 id="bonus">Bonus</h3>
+
+<p>If you want to include more complex HTML without dealing with escaping it for JavaScript, you can render HTML partials. Using <code>j render</code> will tell Rails to escape it for JavaScript for you:</p>
+
+<pre><code class="language-javascript">$("ul#things_list").append("&lt;%= j render @thing %&gt;"); // renders partial at 'views/things/_thing.html.erb'
+</code></pre>
+        </section>
+
+        <footer class="post-footer">
+
+
+
+            <section class="author">
+                <h4><a href="../author/molly/index.html">Molly</a></h4>
+
+                    <p>Read <a href="../author/molly/index.html">more posts</a> by this author.</p>
+                <div class="author-meta">
+                    
+                    
+                </div>
+            </section>
+
+
+            <section class="share">
+                <h4>Share this post</h4>
+                <a class="icon-twitter" href="https://twitter.com/share?text=Molly%E2%80%99s%20Very%20Basic%20Guide%20to%20Rails%20Ajax&amp;url=http://localhost:2368/mollys-very-basic-guide-to-rails-ajax/"
+                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                    <span class="hidden">Twitter</span>
+                </a>
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/mollys-very-basic-guide-to-rails-ajax/"
+                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                    <span class="hidden">Facebook</span>
+                </a>
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/mollys-very-basic-guide-to-rails-ajax/"
+                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                    <span class="hidden">Google+</span>
+                </a>
+            </section>
+
+        </footer>
+
+    </article>
+
+</main>
+
+
+
+    <footer class="site-footer clearfix">
+         <section class="copyright"><a href="http://localhost:2368">molblog</a> &copy; 2015</section>
+         <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
+    </footer>
+
+    <script src="../public/jquery.js?v=b0e5ec2566"></script>
+
+    <script type="text/javascript"  
+        src="../assets/js/prism.js?v=b0e5ec2566"></script> 
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=b0e5ec2566"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=b0e5ec2566"></script>
+
+</body>
+</html>
