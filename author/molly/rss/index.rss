@@ -1,0 +1,511 @@
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title>Molly - molblog</title><description>notes from the flatiron school in the financial district</description><link>http://localhost:2368/</link><generator>Ghost 0.5</generator><lastBuildDate>Mon, 16 Mar 2015 18:52:07 GMT</lastBuildDate><atom:link href="http://localhost:2368/author/molly/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title>Molly’s Very Basic Guide to Rails Ajax</title><description>&lt;p&gt;I wrote this as a quick reference for some teammates, and it’s handy so I figured I should post it here.&lt;/p&gt;
+
+&lt;h2 id="intheview"&gt;In the view&lt;/h2&gt;
+
+&lt;p&gt;Add &lt;code&gt;remote: true&lt;/code&gt; to the form or link. If it’s a form, also add &lt;code&gt;authenticity_token: true&lt;/code&gt; so it will still work without JavaScript. If it’s a link using a method other than GET, consider making it a &lt;code&gt;button_to&lt;/code&gt; so it will still work without JavaScript.&lt;/p&gt;
+
+&lt;h4 id="examples"&gt;Examples&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;lt;%= form_for @thing, remote: true, authenticity_token: true do |f| %&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;lt;%= link_to "Do something", some_path, remote: true %&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;lt;%= button_to "✖", thing_path(@thing), method: :delete, remote: true %&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id="inthecontroller"&gt;In the controller&lt;/h2&gt;
+
+&lt;p&gt;Make sure there’s a &lt;code&gt;respond_to&lt;/code&gt; that tells it how to handle JS requests.&lt;/p&gt;
+
+&lt;h4 id="example"&gt;Example&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;class ThingsController &amp;lt; ApplicationController
+
+  def create
+    @thing = Thing.create(thing_params)
+    respond_to do |format|
+      if @thing.save
+        format.html { redirect_to @thing } # what it would do without ajax
+        format.js {} # looks for a view in the 'things' folder called 'create.js.erb'
+      end
+    end
+  end
+
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id="thejavascript"&gt;The JavaScript&lt;/h2&gt;
+
+&lt;p&gt;Make a view in “views/[controller]” called “[action].js.erb”. So for our example, “views/things/create.js.erb”.&lt;/p&gt;
+
+&lt;p&gt;The JavaScript you write in this view will be executed automatically when the Ajax call completes. You can do whatever you want in here! Also, you can use ERB.&lt;/p&gt;
+
+&lt;h4 id="example"&gt;Example&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;$("ul#things_list").append("&amp;lt;li&amp;gt;&amp;lt;%= @thing.name %&amp;gt;&amp;lt;/li&amp;gt;");
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id="bonus"&gt;Bonus&lt;/h3&gt;
+
+&lt;p&gt;If you want to include more complex HTML without dealing with escaping it for JavaScript, you can render HTML partials. Using &lt;code&gt;j render&lt;/code&gt; will tell Rails to escape it for JavaScript for you:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-javascript"&gt;$("ul#things_list").append("&amp;lt;%= j render @thing %&amp;gt;"); // renders partial at 'views/things/_thing.html.erb'
+&lt;/code&gt;&lt;/pre&gt;</description><link>http://localhost:2368/mollys-very-basic-guide-to-rails-ajax/</link><guid isPermaLink="false">088fdcb2-12b1-45df-83a8-e2bdf16dc997</guid><dc:creator>Molly</dc:creator><pubDate>Tue, 13 Jan 2015 16:42:00 GMT</pubDate></item><item><title>Ajax and Graceful Degradation</title><description>&lt;p&gt;For a recent Flatiron School lab, we were tasked with building a to-do list app from scratch, mimicking the functionality of &lt;a href="http://todomvc-with-rails.herokuapp.com/"&gt;this&lt;/a&gt; TodoMVC implementation, including using Ajax.&lt;/p&gt;
+
+&lt;p&gt;But I gave myself an additional challenge. After years of watching my wife use NoScript to rule her browser with an iron fist, finding many sites shockingly unusable without Javascript, I’m sensitive to the need for graceful degradation. So I aimed to add Ajax to the features while preserving their functionality for users who may not have JavaScript enabled, or whose JavaScript is not functioning for some reason.&lt;/p&gt;
+
+&lt;p&gt;I thought I’d go over how I implemented this for the various features and share what I learned along the way.&lt;/p&gt;
+
+&lt;h4 id="listanditemcreation"&gt;List and item creation&lt;/h4&gt;
+
+&lt;p&gt;For this particular to-do list app, list and item creation used almost exactly the same form. Since the sample app linked above actually only allows one list, I’ll focus on the new item form. Here’s the form in the view:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;lt;%= form_for [@list, Item.new], html: { class: "new_todo", id: "new_todo" }, remote: true, authenticity_token: true do |f| %&amp;gt;  
+    &amp;lt;%= f.text_field :description, id: "new-todo", placeholder: "add an item!", autofocus: true %&amp;gt;
+  &amp;lt;% end %&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You probably know that the &lt;code&gt;remote&lt;/code&gt; option allows the form to be submitted by Ajax automatically. What might surprise you is that, by itself, this option breaks the ability for the form to be submitted without Ajax. If you turn JavaScript off and try to submit the form, you’ll get an error about a missing authenticity token.&lt;/p&gt;
+
+&lt;p&gt;This is because rails normally automatically generates a hidden input for the authenticity token, preventing cross-site forgeries. But Rails.js handles authenticity tokens differently, so as of Rails 4, using &lt;code&gt;remote: true&lt;/code&gt; actually prevents Rails from generating that hidden input. To fix this, just add the option I used above, &lt;code&gt;authenticity_token: true&lt;/code&gt;, to force it to generate the input anyway.&lt;/p&gt;
+
+&lt;p&gt;The other thing you have to do to make sure this form works without JavaScript is just make sure you have an appropriate response in your controller:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;def create  
+  @list = List.find(params[:list_id])
+  respond_to do |format|
+    @item = @list.items.create(item_params)
+    if @item.save
+      format.html { redirect_to @list }
+      format.js {}
+    end
+  end
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When you submit a form normally, without Ajax, it expects an HTML response, so the code in the &lt;code&gt;format.html&lt;/code&gt; block will be executed. It’s quite simple to include this, so that browsers without JavaScript know where to go after submitting the form.&lt;/p&gt;
+
+&lt;h4 id="itemdeletion"&gt;Item deletion&lt;/h4&gt;
+
+&lt;p&gt;At first when I added the ability to delete a list item, I used &lt;code&gt;link_to&lt;/code&gt;, like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;lt;%= link_to "", list_item_path(@list, item), method: :delete, class: "destroy", remote: true %&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It worked with JavaScript and I just kind of assumed it would work without it. But later I tried it and was surprised to find it didn’t work! I got an error about there being no route for a GET request to the list item path. But surely it should be a DELETE request...? Well, no. Browsers don’t support any requests other than GET for links; when you use the &lt;code&gt;method&lt;/code&gt; option with &lt;code&gt;link_to&lt;/code&gt;, Rails uses JavaScript behind the scenes to turn the request into the kind you specified. It’s impossible for a non-GET &lt;code&gt;link_to&lt;/code&gt; to gracefully degrade.&lt;/p&gt;
+
+&lt;p&gt;There is a solution, however. Instead of &lt;code&gt;link_to&lt;/code&gt;, you can use &lt;code&gt;button_to&lt;/code&gt;, which generates a form and can therefore make a DELETE request. I thought this seemed like a huge pain, but it was actually pretty simple:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;lt;%= button_to "✖", list_item_path(@list, item), method: :delete, class: " destroy", remote: true %&amp;gt;  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I had to tweak the CSS a little to make it look the same, putting the delete icon in the link text rather than in an &lt;code&gt;::after&lt;/code&gt; pseudoelement, but other than that you can see that it’s pretty much exactly the same from the developer’s perspective. And now, users could delete list items even without JavaScript.&lt;/p&gt;
+
+&lt;h4 id="itemediting"&gt;Item editing&lt;/h4&gt;
+
+&lt;p&gt;The solution to the graceful degradation problem for item editing was slightly less simple. This is because the app was set up to use JavaScript to listen for a double-click on a list item and then show a hidden text field. Obviously, non-JavaScript edit forms are nt a problem, but here there was no obvious way to include that form on the list page without messing up the site’s design. &lt;br&gt;
+I came up with an alternative solution: I added an edit button that appears next to the delete button, as below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="http://localhost:2368/content/images/2014/12/RailsTodomvc.png" alt=""&gt;&lt;/p&gt;
+
+&lt;p&gt;This button simply links to an edit page for that item which mimics the design of the rest of the site.&lt;/p&gt;
+
+&lt;p&gt;Of course, I didn’t want this edit button to be visible to the JavaScript users who didn’t need it. Luckily, there’s an easy way to hide elements from JavaScript users while showing them to non-JavaScript users: just hide them with JavaScript.&lt;/p&gt;
+
+&lt;h4 id="challenges"&gt;Challenges&lt;/h4&gt;
+
+&lt;p&gt;Not every feature had a straightforward non-JavaScript implementation, though. The one feature I couldn’t settle on how to implement was the ability to mark tasks as completed.&lt;/p&gt;
+
+&lt;p&gt;Again though, this was less of a technical limitation and more of a design limitation. Obviously it would be possible to include a form with which users could mark items as completed, but without JavaScript, it couldn’t be submitted as soon as the user clicks the checkbox; there would need to be a submit button, but there just didn’t seem to be a good, intuitive place to put it.&lt;/p&gt;
+
+&lt;p&gt;The other option would be for completion status to be edited on the item’s edit page, but that’s not great either. So for now I’ve left this feature JavaScript-only.&lt;/p&gt;
+
+&lt;h4 id="butwhy"&gt;But why?&lt;/h4&gt;
+
+&lt;p&gt;I hear you cry. Is it really worth it to go to the trouble to support non-JavaScript users?&lt;/p&gt;
+
+&lt;p&gt;Of course, sometimes you’ll have an app that depends on JavaScript for core functionality and just can’t work without it, and that’s OK. And non-JavaScript users are a small percentage of the total, so few people will be inconvenienced if your site does not degrade gracefully (not that that’s stopped people from tearing their hair out trying to support IE7).&lt;/p&gt;
+
+&lt;p&gt;But as with anything, it’s a tradeoff. If a certain feature is especially annoying to implement without JavaScript, especially if it’s not essential to your site, it’s probably fair to conclude that it’s not worth the effort.&lt;/p&gt;
+
+&lt;p&gt;But as you can see from the first examples here, it’s often trivially easy to maintain functionality for non-JavaScript users. And once you know about &lt;code&gt;authenticity_token: true&lt;/code&gt;, for example, it’s easy to keep it in your toolbox and just use it unless you have a special reason not to.&lt;/p&gt;
+
+&lt;p&gt;With these habits you’ll end up preserving a lot of functionality for non-JavaScript users with minimal effort. To me, that’s a win-win.&lt;/p&gt;</description><link>http://localhost:2368/ajax-and-graceful-degradation/</link><guid isPermaLink="false">4f137500-99ca-43ed-b50f-fe53cda986f8</guid><category>Flatiron School</category><dc:creator>Molly</dc:creator><pubDate>Wed, 03 Dec 2014 16:09:05 GMT</pubDate></item><item><title>Lessons from a Side Project: Ironboard Batch Tester</title><description>&lt;p&gt;Often my ideas for code projects come from using other products and thinking, “I should be able to do this thing” and then realizing, “Hey wait — I think I know enough to make it so I can do this thing!” at which point, of course, I &lt;em&gt;have&lt;/em&gt; to do it.&lt;/p&gt;
+
+&lt;p&gt;This recent project was no exception. When the new RSpec Ironboard gem was introduced, allowing us to test our local builds and get credit for them on Ironboard, I thought it was pretty awesome. But we had already done so many labs, and I wanted to try it on them, but it seemed like that would mean cding into every lab directory and running the gem manually, which sucks. It occurred to me that I might have the skills to automate this process, so I had to try it.&lt;/p&gt;
+
+&lt;p&gt;The result is &lt;a href="https://github.com/molgin/ironboard-batch-tester"&gt;Ironboard Batch Tester&lt;/a&gt;, a simple script that, given a path to a labs folder and a GitHub username, tests all the available labs and uploads them to Ironboard.&lt;/p&gt;
+
+&lt;p&gt;Here’s some of the stuff I learned along the way.&lt;/p&gt;
+
+&lt;h4 id="checkingouttherspecironboardcode"&gt;Checking out the RSpec Ironboard code&lt;/h4&gt;
+
+&lt;p&gt;I could have just automated the process of changing directories and executing the &lt;code&gt;ironboard&lt;/code&gt; bash command, but that didn’t seem like the right plan. If the Ironboard gem was written in Ruby and I was writing in Ruby I should just be able to look inside the gem and do whatever it does when that command is run.&lt;/p&gt;
+
+&lt;p&gt;Turns out checking out the source code of any Ruby gem is really easy. The command &lt;code&gt;gem unpack rspec-ironboard&lt;/code&gt; puts the code in a folder in your working directory where you can rifle through it to your heart’s content. I immediately opened the &lt;code&gt;bin/ironboard&lt;/code&gt; file to find out what happens when I run that &lt;code&gt;ironboard&lt;/code&gt; command. Here it is:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;#!/usr/bin/env ruby
+
+SERVICE_URL = 'http://ironbroker.flatironschool.com'  
+SERVICE_ENDPOINT = '/e/flatiron_rspec/build/ironboard'  
+require 'rspec/ironboard'
+
+username = RSpec::Ironboard::UsernameParser.get_username  
+user_id = RSpec::Ironboard::UserIdParser.get_user_id  
+repo = RSpec::Ironboard::RepoParser.get_repo  
+runner = RSpec::Ironboard::Runner.new(username, user_id, repo, ARGV)  
+runner.run
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Cool! So basically it gets the user’s github username, user_id, and repo name, and then uses that info (along with &lt;code&gt;ARGV&lt;/code&gt; which I know from my brief forays into C contains any command line arguments) to initialize a new &lt;code&gt;Runner&lt;/code&gt; object, which it then runs by calling &lt;code&gt;#run&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;I checked out how these methods worked as well. To get the username, it just asks the user for their username. It gets the user ID from Github based on the username. It gets the repo name using this code:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;class RepoParser  
+      def self.get_repo
+        begin
+          repo = Git.open(FileUtils.pwd)
+        rescue
+          puts "Not a valid Git repository"
+          die
+        end
+
+        url = repo.remote.url
+
+        repo_name = url.match(/(?:https:\/\/|git@).*\/(.+)(?:\.git)/)[1]
+      end
+
+      def self.die
+        exit
+      end
+    end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This creates a &lt;code&gt;Git&lt;/code&gt; object based on the current diretory, full of info about the repository, as long as it is one. It gets the remote URL from that and then applies a regex to extract just the repo name from that. This is kinda cool because it could just get the repo name from the directory name, since they’ll be the same by default when cloning, but this works even if the user has changed the name of the directory.&lt;/p&gt;
+
+&lt;p&gt;Then it creates and runs the &lt;code&gt;Runner&lt;/code&gt; object, which is the meat of the gem. It's kind of long, and &lt;em&gt;mostly&lt;/em&gt; its inner workings didn’t affect my project, so I won’t reproduce it here, but I encourage you to &lt;code&gt;gem unpack rspec-ironboard&lt;/code&gt; and check it out for yourself.&lt;/p&gt;
+
+&lt;h4 id="objectorientedprogrammingreallyisbetter"&gt;Object-oriented programming really is better&lt;/h4&gt;
+
+&lt;p&gt;When I started, I just wanted to see if I could make the thing work really quick so I just threw together a rather lazy procedural solution. It was pretty much just one long method, as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;def test_all(path, skipped_labs, username, user_id, skip_successful_labs_on_rerun)  
+  Dir.chdir path do
+    puts Dir.pwd
+    f = File.open('.passing_labs', 'a+')
+    passing_labs = f.each_line.with_object([]) { |line, ary| ary.push line.strip }
+    f.close
+    labs = Dir.glob("**/*006/").sort_by{ |f| File.ctime(f) }
+    skipped_labs += passing_labs if skip_successful_labs_on_rerun
+    skipped_labs.each do |skipped_lab|
+      labs.reject! { |lab| lab.include? skipped_lab }
+    end
+    puts "All the non-skipped labs have already been tested and passed!" if labs.empty?
+    labs.each do |lab|
+      Dir.chdir lab do
+        lab_name = lab.split("/").find { |str| str.include? "-ruby-006" }
+        nice_lab_name = lab_name.sub("-ruby-006","").split("-").map(&amp;amp;:capitalize).join(" ")
+        puts "\nChecking #{nice_lab_name}...\n\n".magenta
+        repo = RSpec::Ironboard::RepoParser.get_repo
+        runner = RSpec::Ironboard::Runner.new(username, user_id, repo, [])
+        runner.run
+        if runner.formatted_results[:failure_count] == 0
+          File.open("#{path}/.passing_labs", 'a') do |f|
+            f.puts lab_name
+          end
+        end
+      end
+    end
+  end
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It’s not very pleasant to look at and it wouldn’t be much fun to change. It worked, but I knew I could do better. So I refactored it into an object-oriented version:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;class IronboardTester  
+  attr_reader :path, :username
+  attr_accessor :skipped_labs, :skip_successful_labs_on_rerun, :passing_labs, :labs
+
+  def initialize(path, username, skipped_labs, skip_successful_labs_on_rerun)
+    @path = path
+    @username = username
+    @skipped_labs = skipped_labs
+    @skip_successful_labs_on_rerun = skip_successful_labs_on_rerun
+    @passing_labs = read_or_create_log
+    @labs = get_labs
+  end
+
+  def user_id
+    @user_id ||= get_user_id
+  end
+
+  def get_user_id
+    RSpec::Ironboard::UserIdParser.get_user_id
+  end
+
+  def repo
+    RSpec::Ironboard::RepoParser.get_repo
+  end
+
+  def new_runner(lab)
+    RSpec::Ironboard::Runner.new(username, user_id, repo, [])
+  end
+
+  def test(lab)
+    Dir.chdir "#{lab}" do
+      runner = new_runner(lab)
+      runner.run
+      if runner.formatted_results[:failure_count] == 0
+        log(lab)
+      end
+    end
+  end
+
+  def log(lab)
+    File.open("#{path}/.passing_labs", 'a') do |f|
+      f.puts lab_name(lab)
+    end
+  end
+
+  def read_or_create_log
+    f = File.open("#{path}/.passing_labs", 'a+')
+      passing_labs = f.each_line.with_object([]) { |line, ary| ary.push line.strip }
+    f.close
+    passing_labs
+  end
+
+  def get_labs
+    Dir.glob("#{path}/**/*006/").sort_by{ |f| File.ctime(f) }
+  end
+
+  def skip_passing_labs
+    self.skipped_labs = skipped_labs | passing_labs
+  end
+
+  def lab_name(lab)
+    lab.split("/").find { |str| str.include? "-ruby-006" }.gsub("_", "-")
+  end
+
+  def nice_lab_name(lab)
+    lab_name(lab).sub("-ruby-006","").split("-").map(&amp;amp;:capitalize).join(" ")
+  end
+
+  def announce(lab)
+    puts "\nChecking #{nice_lab_name(lab)}...\n".magenta
+  end
+
+  def test_all
+    labs.each do |lab|
+      announce(lab)
+      test(lab)
+    end
+  end
+
+  def run
+    self.passing_labs = read_or_create_log
+    skip_passing_labs if skip_successful_labs_on_rerun
+    puts "All the non-skipped labs have already been tested and passed!".magenta if labs.empty?
+    test_all
+  end
+
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Obviously it’s longer, but I think it‘s much nicer. I’ve been reading Sandi Metz’s &lt;a href="http://www.poodr.com/"&gt;&lt;em&gt;Practical Object-Oriented Design in Ruby&lt;/em&gt;&lt;/a&gt; and I attempted to follow her recommendations of single responsibility for methods and isolation of dependencies. Now if I want to change something (which I have) it’s a lot easier to see what’s what.&lt;/p&gt;
+
+&lt;p&gt;I’m sure there are many potentially better ways I could have organized this, but still I was pretty happy with it.&lt;/p&gt;
+
+&lt;h4 id="thinkingaboutotherfeatures"&gt;Thinking about other features&lt;/h4&gt;
+
+&lt;p&gt;Originally I just wanted my program to take in a path to the folder where the user keeps their labs and run the &lt;code&gt;Runner&lt;/code&gt; in each folder. But as I worked on it and talked to other people, I realized it needed some adjustments.&lt;/p&gt;
+
+&lt;h6 id="abilitytoparsenestedfoldersoflabs"&gt;Ability to parse nested folders of labs&lt;/h6&gt;
+
+&lt;p&gt;I just keep all my labs in one big folder, but Sam told me he keeps his organized in subfolders by week and day. My original implementation couldn’t handle this, since it just read the name of every top-level folder after cding into the main folder:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;labs = Dir['*']  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To fix this I figured out that I could use &lt;code&gt;Dir.glob&lt;/code&gt; to recursively look through folders, stopping at folders that end in "006" as I expect lab folders to.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby "&gt;Dir.glob("#{path}/**/*006/")  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This could probably be done better, because after all, what if the user has changed the folder names? Maybe I could attempt to check whether each folder is a valid Git repository. But still, this was a significant improvement.&lt;/p&gt;
+
+&lt;h6 id="makingitprettier"&gt;Making it prettier&lt;/h6&gt;
+
+&lt;p&gt;When my tester runs all your local labs at once, it obviously spits out a ton of output. I thought it would be nicer and easier to understand if I could have it announce each lab before testing it, ideally in a color that would stand out.&lt;/p&gt;
+
+&lt;p&gt;And of course, there’s a gem for that! &lt;a href="https://github.com/fazibear/colorize"&gt;Colorize&lt;/a&gt; adds methods that you can call on your strings so that they’ll print in colors:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;require 'colorize'  
+...
+def announce(lab)  
+  puts "\nChecking #{nice_lab_name(lab)}...\n".magenta
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h6 id="skippinglabsthathavealreadypassed"&gt;Skipping labs that have already passed&lt;/h6&gt;
+
+&lt;p&gt;When testing I had to run my program a lot, and I also realized that if any labs threw an error, you'd have to run it again. I had already designed a way to add labs to a list and skip them, but what about the labs that have already been tested and passed? There’s unlikely to be a need to re-test them.&lt;/p&gt;
+
+&lt;p&gt;So I added a way for my program to keep track of which labs have already passed.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;def test(lab)  
+  Dir.chdir "#{lab}" do
+    runner = new_runner(lab)
+    runner.run
+    if runner.formatted_results[:failure_count] == 0
+      log(lab)
+    end
+  end
+end
+
+def log(lab)  
+  File.open("#{path}/.passing_labs", 'a') do |f|
+    f.puts lab_name(lab)
+  end
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;From looking at the gem source, I found out that the runner object stores the results of each lab’s tests as a hash in an instance variable, &lt;code&gt;formatted_results&lt;/code&gt;. The key &lt;code&gt;:failure_count&lt;/code&gt; is, well, the failure count. If it’s zero, my program opens a hidden file, &lt;code&gt;.passing_labs&lt;/code&gt;, in the main labs directory, and adds that lab’s name to it.&lt;/p&gt;
+
+&lt;p&gt;Then each time the program it reads the file and converts its contents into an array with the method &lt;code&gt;read_or_create_log&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;def read_or_create_log  
+  f = File.open("#{path}/.passing_labs", 'a+')
+    passing_labs = f.each_line.with_object([]) { |line, ary| ary.push line.strip }
+  f.close
+  passing_labs
+end  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then it‘s easy for the program to skip the labs in that list, the same way it skips the other skipped labs.&lt;/p&gt;
+
+&lt;h4 id="otherfeaturestopossiblyadd"&gt;Other features to possibly add&lt;/h4&gt;
+
+&lt;p&gt;There are definitely a few ways this program could be improved. A couple that come to mind are...&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Error handling&lt;/strong&gt; - It’s fairly likely that at least one of the hundred-plus labs the program tests will throw an error, in which case currently the program terminates, forcing the user to either fix that lab or manually add its name to the list of skipped labs and re-run the program. It would be nice if, instead, it could print a message explaining the error and ask the user if they’d like to skip the lab and proceed, possibly even storing that information so it will be skipped in the future as well.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Improved user-friendliness&lt;/strong&gt; - Currently to use the program, you have to open it up and edit it to assign your labs folder path and your GitHub username to variables. It might be nice if instead it would ask you for this info when you run it, again possibly storing this info for future use and providing an interface for altering other info, like the skipped labs list, as well.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;In the end, I’m really glad I did this project even if I’m the only one to use it. It was really fun and great practice and I learned a ton. I also had some illuminating debugging experiences that I‘ll save for another day.&lt;/p&gt;
+
+&lt;p&gt;So far, I’m happy with my compulsion to try to solve every possibly solvable problem I encounter. Even if it’s trivial, it’s worth it for what I learn in the process.&lt;/p&gt;</description><link>http://localhost:2368/lessons-from-a-side-project-ironboard-batch-tester/</link><guid isPermaLink="false">f4ba2a90-1673-4684-8b6b-465c37681614</guid><category>Flatiron School</category><dc:creator>Molly</dc:creator><pubDate>Tue, 04 Nov 2014 14:59:46 GMT</pubDate></item><item><title>The Perils of Mutable Defaults</title><description>&lt;p&gt;Recently I wanted to set up a hash representing some music. In this hash, I needed each key to be an artist name, and each value to be an array representing that artist’s songs.&lt;/p&gt;
+
+&lt;p&gt;Pretty straightforward, but I wanted to be able to shovel songs into these song arrays without worrying about whether I’d seen that artist before.&lt;/p&gt;
+
+&lt;p&gt;I’d read that you could initialize a hash with a default value, and this seemed like the perfect situation for it — I’d just initialize my hash with a default value of an empty array, like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;music_hash = Hash.new([])  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;But when I started populating the hash with my data, I started to notice some weird results. For simplicity I’ll represent this as an IRB session.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;gt; music_hash["dave matthews band"] &amp;lt;&amp;lt; "tripping billies"
+=&amp;gt; ["tripping billies"]
+&amp;gt; music_hash["dave matthews band"] &amp;lt;&amp;lt; "crash"
+=&amp;gt; ["tripping billies", "crash"]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So far so good, right? These return values are just as they should be. Let’s take a look at our whole hash.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;gt; music_hash
+=&amp;gt; {}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Um. It’s empty? Weird... Well, I’ll try adding some more songs.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;gt; music_hash["calvin harris"] &amp;lt;&amp;lt; "sweet nothing"
+=&amp;gt; ["tripping billies", "crash", "sweet nothing"]
+&amp;gt; music_hash["avicii"] &amp;lt;&amp;lt; "wake me up"
+=&amp;gt; ["tripping billies", "crash", "sweet nothing", "wake me up"]
+&amp;gt; music_hash
+=&amp;gt; {}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;At this point I was totally baffled. Somehow, even though I had clearly used different keys, all the songs were going into the same array, and all the artists seemed to have all the songs in their arrays. And on top of that, somehow, my hash was still empty!&lt;/p&gt;
+
+&lt;p&gt;So what’s going on with this? There’s a clue in the documentation for &lt;a href="http://www.ruby-doc.org/core-1.9.3/Hash.html#method-c-new"&gt;Hash::new&lt;/a&gt;:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;strong&gt;new(obj) → new_hash&lt;/strong&gt;&lt;/p&gt;
+  
+  &lt;p&gt;If &lt;em&gt;obj&lt;/em&gt; is specified, this single object will be used for all default values.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;em&gt;This single object&lt;/em&gt;. It turns out that when you initialize a hash with a default value of an empty array by writing &lt;code&gt;Hash.new([])&lt;/code&gt; or &lt;code&gt;Hash.new(Array.new)&lt;/code&gt;, its default value will be &lt;em&gt;that one specific array&lt;/em&gt;. This is because that argument is only evaluated once, when the hash is created, and then the resulting array object becomes the default value for every key. When I shoveled my data into it, I wasn’t adding or updating actual key-value pairs in my hash — I was actually mutating that default array.&lt;/p&gt;
+
+&lt;p&gt;This explains why all the songs went into the same array, regardless of the key used to add them, and also why my hash stayed empty. I could check the value of a totally new, gibberish key and still get back that same array of songs, because it’s just the default value.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;gt; music_hash["jak;sdjfkdajf;alsdkfja"]
+=&amp;gt; ["tripping billies", "crash", "sweet nothing", "wake me up"]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So, you’re probably wondering, how &lt;em&gt;do&lt;/em&gt; we make the kind of hash we were trying to make — one where each key has its &lt;em&gt;own&lt;/em&gt; empty array as a default value?&lt;/p&gt;
+
+&lt;p&gt;The solution isn’t the most convenient to type, but it works:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;new_music_hash = Hash.new{ |h,k| h[k] = [] }  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This works because the block we pass into &lt;code&gt;Hash.new&lt;/code&gt; is executed every time a key isn’t found, and therefore each key gets its own personal empty array. As you probably guessed, &lt;code&gt;h&lt;/code&gt; stands for ‘hash’ and &lt;code&gt;k&lt;/code&gt; stands for ‘key’. &lt;/p&gt;
+
+&lt;p&gt;This has some interesting implications because it means that if you wanted to, you could make each key’s default value based on that key in some way. Or you could randomize your default values, or do any number of other weird things. You probably &lt;em&gt;shouldn’t&lt;/em&gt;... but you could!&lt;/p&gt;
+
+&lt;p&gt;There’s one small potential drawback to this solution. Because the block is evaluated every time a key isn’t found and actually assigns an empty array to the value of that key, just asking the hash for the value of a key will result in that key being inserted into the hash if it wasn’t already there. So if for some reason I wanted to check if I had any songs by a certain artist in my hash...&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;gt; new_music_hash["owen pallett"].empty?
+=&amp;gt; true
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;...that artist and its empty array would now be part of my hash:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;&amp;gt; new_music_hash
+=&amp;gt; {"owen pallett"=&amp;gt;[]}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If this isn’t what you want, this solution won’t be ideal for you. Luckily, in most cases it will probably be a simple enough workaround to either remove those unwanted key-value pairs from your hash, or just suck it up and use the extra step of conditional assignment rather than initializing with a default value.&lt;/p&gt;
+
+&lt;p&gt;Finally, as you might expect, all this hassle is only necessary if the default value you want to use is a mutable type. If you want each key’s default value to be a new string, array, or hash, use the block form. But if you want the default value to be an integer, say 0, you’re fine with &lt;code&gt;Hash.new(0)&lt;/code&gt;. Your integer won’t mutate because, well, it’s immutable.&lt;/p&gt;
+
+&lt;p&gt;Now go forth and initialize your hashes with maximum efficiency and minimum confusion!&lt;/p&gt;</description><link>http://localhost:2368/the-perils-of-mutable-defaults/</link><guid isPermaLink="false">bdcc87be-168d-4fe3-99e8-319609af3404</guid><category>Flatiron School</category><dc:creator>Molly</dc:creator><pubDate>Tue, 21 Oct 2014 02:53:25 GMT</pubDate></item><item><title>To Chain or Not to Chain</title><description>&lt;p&gt;Chaining methods in Ruby is a great way to get a lot done on just one line. But the more methods you chain together, the greater the chance that your code will have results you might not expect.&lt;/p&gt;
+
+&lt;p&gt;So how do you know when to chain your methods? A crucial thing to keep in mind when chaining methods is what each method returns.&lt;/p&gt;
+
+&lt;p&gt;Chained methods work because each one operates on the return value of the previous method. So if you can anticipate each method's &lt;strong&gt;return value&lt;/strong&gt;, you can anticipate your code's behavior.&lt;/p&gt;
+
+&lt;p&gt;Some methods return different kinds of objects depending on the circumstances. For example, say you're storing user input in a variable &lt;code&gt;user_string&lt;/code&gt;. Right away, you want to modify the string in place to replace any instances of your three least favorite misspelled words. (Some might question your choice to permanently modify the string — what if you want that data one day? — but you like to walk on the wild side.) So you write the following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;user_string = gets.chomp
+user_string.gsub!("definately", "definitely").gsub!("wierd", "weird").gsub!("recieve", "receive")
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Looks good, right? Well, maybe not. It turns out that many bang methods, &lt;code&gt;gsub!&lt;/code&gt; included, return &lt;code&gt;nil&lt;/code&gt; if they don't actually change anything. So if your user is a great speller — or they just don't use one of the first two words — Ruby will complain of a &lt;code&gt;NoMethodError&lt;/code&gt;, because you can't call &lt;code&gt;gsub!&lt;/code&gt; on &lt;code&gt;nil&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;To make sure your chained methods work regardless of the content of the string, it'd be better to use the non-bang &lt;code&gt;gsub&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;user_string = gets.chomp  
+user_string = user_string.gsub("definately", "definitely").gsub("wierd", "weird").gsub("recieve", "receive")  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or to refrain from chaining:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class="language-ruby"&gt;user_string = gets.chomp  
+user_string.gsub!("definately", "definitely")  
+user_string.gsub!("wierd", "weird")  
+user_string.gsub!("recieve", "receive")  
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So when to chain? I think a good rule of thumb would be to only chain if you can be sure your methods will have appropriate return values. If they won't, or won't always, you can run into all kinds of unexpected consequences, and it can get confusing fast.&lt;/p&gt;
+
+&lt;hr&gt;
+
+&lt;p&gt;&lt;strong&gt;Bonus trivia:&lt;/strong&gt; Because mathematical operators are technically methods, you can think of many simple arithmetic expressions as chained methods — as long as they share the same operator precedence, anyway: &lt;code&gt;1 + 9 - 3 # =&amp;gt; 7&lt;/code&gt; is equivalent to &lt;code&gt;1.+(9).-(3) # =&amp;gt; 7&lt;/code&gt;. (Potentially fascinating related question: How is operator precedence [i.e. order of operations] implemented? No, really, tell me!)&lt;/p&gt;</description><link>http://localhost:2368/to-chain-or-not-to-chain/</link><guid isPermaLink="false">387be1b3-d1a2-4abe-9c7d-c120bcf641ae</guid><category>Flatiron School</category><dc:creator>Molly</dc:creator><pubDate>Tue, 07 Oct 2014 04:47:37 GMT</pubDate></item></channel></rss>

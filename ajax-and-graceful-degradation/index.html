@@ -1,25 +1,23 @@
-<!DOCTYPE html>
-<html>
+
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <title>Ajax and Graceful Degradation</title>
-    <meta name="description" content="" />
+    <meta name="description" content="">
 
-    <meta name="HandheldFriendly" content="True" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="shortcut icon" href="../favicon.ico">
 
-    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=b0e5ec2566" />
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400" />
-    <link rel="stylesheet" type="text/css"  
-      href="../assets/css/prism.css?v=b0e5ec2566" />
+    <link rel="stylesheet" type="text/css" href="../assets/css/screen.css?v=c9e24bd945">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic%7COpen+Sans:700,400">
+    <link rel="stylesheet" type="text/css" href="../assets/css/prism.css?v=c9e24bd945">
 
-    <meta name="generator" content="Ghost 0.5" />
+    <meta name="generator" content="Ghost 0.5">
 <link rel="alternate" type="application/rss+xml" title="molblog" href="../rss/index.html">
-<link rel="canonical" href="http://localhost:2368/ajax-and-graceful-degradation/" />
+<link rel="canonical" href="index.html">
 </head>
 <body class="post-template tag-flatiron-school">
 
@@ -28,8 +26,8 @@
 
 <header class="main-header post-head no-cover">
     <nav class="main-nav  clearfix">
-        <a class="back-button icon-arrow-left" href="http://localhost:2368">Home</a>
-        <a class="subscribe-button icon-feed" href="http://localhost:2368/rss/">Subscribe</a>
+        <a class="back-button icon-arrow-left" href="../">Home</a>
+        <a class="subscribe-button icon-feed" href="../rss/index.rss">Subscribe</a>
     </nav>
 </header>
 
@@ -40,7 +38,7 @@
         <header class="post-header">
             <h1 class="post-title">Ajax and Graceful Degradation</h1>
             <section class="post-meta">
-                <time class="post-date" datetime="2014-12-03">03 December 2014</time>  on <a href="../tag/flatiron-school/index.html">Flatiron School</a>
+                <time class="post-date" datetime="2014-12-03">03 December 2014</time>  on <a href="../tag/flatiron-school/">Flatiron School</a>
             </section>
         </header>
 
@@ -98,10 +96,10 @@ end
 
 <h4 id="itemediting">Item editing</h4>
 
-<p>The solution to the graceful degradation problem for item editing was slightly less simple. This is because the app was set up to use JavaScript to listen for a double-click on a list item and then show a hidden text field. Obviously, non-JavaScript edit forms are nt a problem, but here there was no obvious way to include that form on the list page without messing up the site’s design. <br />
+<p>The solution to the graceful degradation problem for item editing was slightly less simple. This is because the app was set up to use JavaScript to listen for a double-click on a list item and then show a hidden text field. Obviously, non-JavaScript edit forms are nt a problem, but here there was no obvious way to include that form on the list page without messing up the site’s design. <br>
 I came up with an alternative solution: I added an edit button that appears next to the delete button, as below:</p>
 
-<p><img src="../content/images/2014/12/RailsTodomvc.png" alt="" /></p>
+<p><img src="../content/images/2014/12/RailsTodomvc.png" alt=""></p>
 
 <p>This button simply links to an edit page for that item which mimics the design of the rest of the site.</p>
 
@@ -133,9 +131,9 @@ I came up with an alternative solution: I added an edit button that appears next
 
 
             <section class="author">
-                <h4><a href="../author/molly/index.html">Molly</a></h4>
+                <h4><a href="../author/molly/">Molly</a></h4>
 
-                    <p>Read <a href="../author/molly/index.html">more posts</a> by this author.</p>
+                    <p>Read <a href="../author/molly/">more posts</a> by this author.</p>
                 <div class="author-meta">
                     
                     
@@ -145,16 +143,13 @@ I came up with an alternative solution: I added an edit button that appears next
 
             <section class="share">
                 <h4>Share this post</h4>
-                <a class="icon-twitter" href="https://twitter.com/share?text=Ajax%20and%20Graceful%20Degradation&amp;url=http://localhost:2368/ajax-and-graceful-degradation/"
-                    onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+                <a class="icon-twitter" href="https://twitter.com/share?text=Ajax%20and%20Graceful%20Degradation&amp;url=http://localhost:2368/ajax-and-graceful-degradation/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
                     <span class="hidden">Twitter</span>
                 </a>
-                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/ajax-and-graceful-degradation/"
-                    onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+                <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:2368/ajax-and-graceful-degradation/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
                     <span class="hidden">Facebook</span>
                 </a>
-                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/ajax-and-graceful-degradation/"
-                   onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
+                <a class="icon-google-plus" href="https://plus.google.com/share?url=http://localhost:2368/ajax-and-graceful-degradation/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;">
                     <span class="hidden">Google+</span>
                 </a>
             </section>
@@ -168,16 +163,14 @@ I came up with an alternative solution: I added an edit button that appears next
 
 
     <footer class="site-footer clearfix">
-         <section class="copyright"><a href="http://localhost:2368">molblog</a> &copy; 2015</section>
+         <section class="copyright"><a href="../">molblog</a> © 2015</section>
          <section class="poweredby">Proudly published with <a href="https://ghost.org">Ghost</a></section>
     </footer>
 
-    <script src="../public/jquery.js?v=b0e5ec2566"></script>
+    <script src="../public/jquery.js?v=c9e24bd945"></script>
 
-    <script type="text/javascript"  
-        src="../assets/js/prism.js?v=b0e5ec2566"></script> 
-    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=b0e5ec2566"></script>
-    <script type="text/javascript" src="../assets/js/index.js?v=b0e5ec2566"></script>
+    <script type="text/javascript" src="../assets/js/prism.js?v=c9e24bd945"></script> 
+    <script type="text/javascript" src="../assets/js/jquery.fitvids.js?v=c9e24bd945"></script>
+    <script type="text/javascript" src="../assets/js/index.js?v=c9e24bd945"></script>
 
 </body>
-</html>
